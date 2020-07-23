@@ -9,22 +9,16 @@ from move.models import MoveReservation, MoveCategory
 from user.models import User
 
 
-def sms_service(data, user):
-
+def sms_service(data):
     phone_number = data['phone_number']
     address = data['address']
-    # email           = EmailMessage(
-    #     'WISO PROJECT-예약완료메세지',
-    #     '이사예약이 완료되었습니다! 이용해주셔서 감사합니다',
-    #     to=[user.email])
-    # email.send()
-    # return SmsService(move_reservations)
 
     headers = {
         'Content-Type': 'application/json; charset=utf-8',
         'x-ncp-auth-key': f'{SMS_AUTH_ID}',
         'x-ncp-service-secret': f'{SMS_SERVICE_SECRET}',
     }
+
     data = {
         'type': 'SMS',
         'contentType': 'COMM',
@@ -57,7 +51,7 @@ class MoveReservate(View):
                 MV_RV_MOBILE_NUMBER=data['phone_number'],
             ).save()
 
-            # self.sms_service(data, user)
+            self.sms_service(data, user)
             return JsonResponse({'message': 'SUCCESS'}, status=200)
 
         except TypeError:

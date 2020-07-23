@@ -39,6 +39,7 @@ class SignUpView(View):
 
             if validation:
                 return validation
+
             hashed_password = bcrypt.hashpw(data['password'].encode('utf-8'), bcrypt.gensalt()).decode()
             User(
                 USR_EMAIL=data['email'],
@@ -59,10 +60,9 @@ class SignUpView(View):
 class SignInView(View):
     def post(self, request):
         data = json.loads(request.body)
+        user = User.objects.get(USR_EMAIL=data['email'])
 
         try:
-            user = User.objects.get(USR_EMAIL=data['email'])
-
             if bcrypt.checkpw(data['password'].encode('utf-8'), user.USR_PASSWORD.encode('utf-8')):
                 access_token = jwt.encode({'id': user.id}, SECRET_KEY, algorithm='HS256')
                 return JsonResponse({'access_token': access_token.decode('utf-8')}, status=200)

@@ -4,11 +4,11 @@ from user.models import User
 
 class HousecleaningReservation(models.Model):
     USER = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
-    STATUS = models.ForeignKey('Status', on_delete=models.SET_NULL, null=True)
     SRVC_START_TIME = models.ForeignKey('ServiceStartTime', on_delete=models.SET_NULL, null=True)
     SRVC_DURATION = models.ForeignKey('ServiceDuration', on_delete=models.SET_NULL, null=True)
     RESVE_CYCLE = models.ForeignKey('ReserveCycle', on_delete=models.SET_NULL, null=True)
     SRVC_DAY_OF_WEEK_HC_RESERVATION = models.ManyToManyField('ServiceDayOfWeek', through='HousecleaningReservationServiceDayOfWeek')
+    STATUS = models.ForeignKey('Status', on_delete=models.SET_NULL, null=True)
     SRVC_START_DATE = models.DateField()
     RESVE_LOCATION = models.CharField(max_length=300, null=True)
     HAVE_PET = models.BooleanField(null=True)
