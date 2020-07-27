@@ -8,6 +8,7 @@ from django.http import JsonResponse, HttpResponse
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from wiso.settings import SECRET_KEY
+
 from .models import User
 
 
@@ -16,20 +17,19 @@ def validate_input(data):
     if len(data['password']) < 8:
         return JsonResponse({'message': 'INVALID_PASSWORD'}, status=400)
 
-    if len(data['phone_number']) != 11:
+    if len(data['mobile_number']) != 11:
         return JsonResponse({'message': 'INVALID_PHONE_NUMBER'}, status=400)
 
-    if User.objects.filter(USR_EMAIL=data['email']).exists():
+    if User.objects.filter(email=data['email']).exists():
         return JsonResponse({'message': 'DUPLICATE_EMAIL'}, status=401)
 
-    if User.objects.filter(USR_MOBILE_NUMBER=data['phone_number']).exists():
+    if User.objects.filter(mobile_number=data['mobile_number']).exists():
         return JsonResponse({'message': 'DUPLICATE_MOBLIE_NUMBER'}, status=401)
 
     return None
 
 
 class SignUpView(View):
-
     def post(self, request):
         data = json.loads(request.body)
 
@@ -42,11 +42,10 @@ class SignUpView(View):
 
             hashed_password = bcrypt.hashpw(data['password'].encode('utf-8'), bcrypt.gensalt()).decode()
             User(
-                USR_EMAIL=data['email'],
-                USR_PASSWORD=hashed_password,
-                USR_MOBILE_NUMBER=data['phone_number']
+                email=data['email'],
+                password=hashed_password,
+                mobile_number=data['mobile_number']
             ).save()
-
             return HttpResponse(status=200)
 
         except ValidationError:
@@ -60,10 +59,11 @@ class SignUpView(View):
 class SignInView(View):
     def post(self, request):
         data = json.loads(request.body)
-        user = User.objects.get(USR_EMAIL=data['email'])
 
         try:
-            if bcrypt.checkpw(data['password'].encode('utf-8'), user.USR_PASSWORD.encode('utf-8')):
+            user = User.objects.get(email=data['email'])
+
+            if bcrypt.checkpw(data['password'].encode('utf-8'), user.password.encode('utf-8')):
                 access_token = jwt.encode({'id': user.id}, SECRET_KEY, algorithm='HS256')
                 return JsonResponse({'access_token': access_token.decode('utf-8')}, status=200)
 
@@ -77,6 +77,7 @@ class SignInView(View):
 class KakaologinView(View):
     def get(self, request):
         kakao_access_code = request.GET.get('code', None)
+        print('1', kakao_access_code)
         url = 'https://kauth.kakao.com/oauth/token'
         headers = {'Content-type': 'application/x-www-form-urlencoded; charset=utf-8'}
         body = {
@@ -87,28 +88,34 @@ class KakaologinView(View):
         }
 
         kakao_token_response = requests.post(url, headers=headers, data=body)
+        print(kakao_token_response)
         kakao_token = json.loads(kakao_token_response.text).get('kakao_token')
+        print(kakao_token)
         url = "https://kapi.kakao.com/v2/user/me"
         headers = {
             'Authorization': f"""Bearer {kakao_token}""",
             'Content-type': 'application/x-www-form-urlencoded; charset=utf-8'
         }
         kakao_response = requests.get(url, headers=headers)
+        print(kakao_response)
         return HttpResponse(f"""{kakao_response.text}""")
 
     def post(self, request):
         try:
             kakao_token = request.headers["Authorization"]
+            print('kt', kakao_token)
             headers = ({"Authorization": f"Bearer {kakao_token}"})
             url = "https://kapi.kakao.com/v1/user/me"
             response = requests.get(url, headers=headers)
+            print('kakao re', response.json)
             kakao_user = response.json()
+            print(kakao_user)
 
         except KeyError:
             return JsonResponse({"message": "INVALID_TOKEN"}, status=400)
 
-        if User.objects.filter(USR_KAKAO_ID=kakao_user["id"]).exists():
-            user_id = User.objects.get(USR_KAKAO_ID=kakao_user["id"]).id
+        if User.objects.filter(kakao_id=kakao_user["id"]).exists():
+            user_id = User.objects.get(kakao_id=kakao_user["id"]).id
             print('user_id', user_id)
             access_token = jwt.encode({'id': user_id}, SECRET_KEY, algorithm="HS256")
             print('access_token', access_token)
@@ -116,9 +123,9 @@ class KakaologinView(View):
 
         else:
             newUser = User.objects.create(
-                USR_KAKAO_ID=kakao_user["id"],
+                kakao_token=kakao_user["id"],
                 # email       = kakao_user["properties"]["account_email"], 
-                USR_NAME=kakao_user["properties"]["nickname"]
+                name=kakao_user["properties"]["nickname"]
             )
             access_token = jwt.encode({'id': newUser.id}, SECRET_KEY, algorithm="HS256")
             return JsonResponse({"access_token": access_token.decode('utf-8')}, status=200)

@@ -1,5 +1,5 @@
 from django.urls import path
-from .views      import UserProfileView, HousecleaningReservationsView, MoveReservationsView
+from .views import UserProfileView, HousecleaningReservationsView, MoveReservationsView
 
 urlpatterns = [
     path('/userprofile', UserProfileView.as_view()),

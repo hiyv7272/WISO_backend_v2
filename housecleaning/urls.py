@@ -1,6 +1,5 @@
 from django.urls import path
-from .views      import *
-# from .views      import RegularReservateView
+from .views import *
 
 urlpatterns = [
     path('/reservecycle', ReserveCycleView.as_view()),

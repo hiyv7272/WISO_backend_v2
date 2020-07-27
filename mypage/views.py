@@ -1,9 +1,10 @@
 from django.views import View
 from django.http import JsonResponse
 from user.utils import login_decorator
-from housecleaning.models import HousecleaningReservation
-from move.models import MoveReservation
+
 from user.models import User
+from move.models import MoveReservation
+from housecleaning.models import HousecleaningReservation
 
 
 class UserProfileView(View):
@@ -19,9 +20,9 @@ class HousecleaningReservationsView(View):
     def get(self, request):
         hr_user = HousecleaningReservation.objects.select_related(
             'USER',
-            'SRVC_START_TIME',
-            'SRVC_DURATION',
-            'RESVE_CYCLE',
+            'SERVICE_STARTING_TIME',
+            'SERVICE_DURATION',
+            'RESERVE_CYCLE',
             'STATUS').filter(USER_id=request.user.id, STATUS_id=1).order_by('id')
 
         try:
@@ -30,20 +31,20 @@ class HousecleaningReservationsView(View):
             for result in hr_user:
                 dict_data = dict()
                 dict_data['id'] = result.id
-                dict_data['name'] = result.USER.USR_NAME
-                dict_data['reserve_cycle'] = result.RESVE_CYCLE.RESVE_CYCLE
-                dict_data['service_duration'] = result.SRVC_DURATION.SRVC_DURATION
-                dict_data['starting_time'] = result.SRVC_START_TIME.SRVC_START_TIME
-                dict_data['service_start_date'] = result.SRVC_START_DATE
-                dict_data['reserve_location'] = result.RESVE_LOCATION
-                dict_data['have_pet'] = result.HAVE_PET
-                dict_data['status'] = result.STATUS.STATUS
+                dict_data['name'] = result.USER.name
+                dict_data['reserve_cycle'] = result.RESERVE_CYCLE.reserve_cycle
+                dict_data['service_duration'] = result.SERVICE_DURATION.SRVC_DURATION
+                dict_data['starting_time'] = result.SERVICE_STARTING_TIME.starting_time
+                dict_data['service_start_date'] = result.service_start_date
+                dict_data['reserve_location'] = result.reserve_location
+                dict_data['have_pet'] = result.have_pet
+                dict_data['status'] = result.STATUS.status
 
                 hr_orders.append(dict_data)
-            
+
             return JsonResponse({"hr_orders": hr_orders}, status=200)
         except KeyError:
-            return JsonResponse({"message": "INVALID_KEY"},status=401)
+            return JsonResponse({"message": "INVALID_KEY"}, status=401)
 
 
 class MoveReservationsView(View):
@@ -51,7 +52,7 @@ class MoveReservationsView(View):
     def get(self, request):
         move_user = MoveReservation.objects.select_related(
             'USER',
-            'MV_CTGRY').filter(USER_id=request.user.id).order_by('id')
+            'MOVE_CATEGORY').filter(USER_id=request.user.id).order_by('id')
 
         try:
             move_orders = list()
@@ -59,13 +60,13 @@ class MoveReservationsView(View):
             for result in move_user:
                 dict_data = dict()
                 dict_data['id'] = result.id
-                dict_data['name'] = result.USER.USR_NAME
-                dict_data['movecategory'] = result.MV_CTGRY.MV_CTGRY_NAME
-                dict_data['address'] = result.MV_RV_ADDRESS
-                dict_data['phone_number'] = result.MV_RV_MOBILE_NUMBER
+                dict_data['name'] = result.USER.name
+                dict_data['move_category'] = result.MOVE_CATEGORY.name
+                dict_data['address'] = result.address
+                dict_data['phone_number'] = result.mobile_number
 
                 move_orders.append(dict_data)
-            
+
             return JsonResponse({"move_orders": move_orders}, status=200)
         except KeyError:
-            return JsonResponse({"message": "INVALID_KEY"},status=401)
+            return JsonResponse({"message": "INVALID_KEY"}, status=401)

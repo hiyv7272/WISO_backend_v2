@@ -1,7 +1,7 @@
 from django.urls import path
-from .views import MoveReservate, MoveCategoryInfo
+from .views import MoveReserve, MoveCategoryInfo
 
 urlpatterns = [
-    path('/reservate', MoveReservate.as_view()),
-    path('/categoryinfo', MoveCategoryInfo.as_view()),
+    path('/reserve', MoveReserve.as_view()),
+    path('/category', MoveCategoryInfo.as_view())
 ]

@@ -5,18 +5,19 @@ from django.views import View
 from django.http import JsonResponse
 from my_settings import SMS_AUTH_ID, SMS_SERVICE_SECRET, SMS_FROM_NUMBER, SMS_URL
 from user.utils import login_decorator
-from user.models import User
+
 from .models import (
     HousecleaningReservation,
     ReserveCycle,
     ServiceDuration,
-    ServiceStartTime,
+    ServiceStartingTime,
     ServiceDayOfWeek,
 )
+from user.models import User
 
 
 def sms_service(data, user):
-    phone_number = user.phone_number
+    mobile_number = user.mobile_number
     address = data['reserve_location']
 
     headers = {
@@ -30,7 +31,7 @@ def sms_service(data, user):
         'countryCode': '82',
         'from': f'{SMS_FROM_NUMBER}',
         'to': [
-            f'{phone_number}',
+            f'{mobile_number}',
         ],
         'subject': 'WISO-PROJECT',
         'content': f'가사도우미예약 완료되었습니다 ^^ 주소지 : {address}'
@@ -61,7 +62,7 @@ class ServiceDurationsView(View):
 class ServiceStartingTimesView(View):
     def get(self, request):
         try:
-            service_starti_times = list(ServiceStartTime.objects.values())
+            service_starti_times = list(ServiceStartingTime.objects.values())
 
             return JsonResponse({'ServiceStartingTimes': service_starti_times}, status=200)
         except service_starti_times.DoesNotExist:
@@ -87,16 +88,16 @@ class OnetimeReservateView(View):
         try:
             HousecleaningReservation(
                 USER_id=user.id,
+                SERVICE_STARTING_TIME_id=data['service_starting_time_id'],
+                SERVICE_DURATION_id=data['service_duration_id'],
+                RESERVE_CYCLE_id=data['reserve_cycle_id'],
                 STATUS_id=data['status_id'],
-                SRVC_START_TIME_id=data['starting_time_id'],
-                SRVC_DURATION_id=data['service_duration_id'],
-                RESVE_CYCLE_id=data['reserve_cycle_id'],
-                SRVC_START_DATE=data['service_start_date'],
-                RESVE_LOCATION=data['reserve_location'],
-                HAVE_PET=data.get('have_pet', 0) == 1
+                service_start_date=data['service_start_date'],
+                reserve_location=data['reserve_location'],
+                have_pet=data.get('have_pet', 0) == 1
             ).save()
 
-            self.sms_service(data, user)
+            sms_service(data, user)
             return JsonResponse({'message': 'success'}, status=200)
         except KeyError:
             return JsonResponse({'message': 'INVALID_KEYS'}, status=400)
@@ -104,5 +105,5 @@ class OnetimeReservateView(View):
             return JsonResponse({'message': 'reserve_cycle_id INVALID_VALUES'}, status=401)
         except ServiceDuration.DoesNotExist:
             return JsonResponse({'message': 'service_duration_id INVALID_VALUES'}, status=401)
-        except ServiceStartTime.DoesNotExist:
+        except ServiceStartingTime.DoesNotExist:
             return JsonResponse({'message': 'starting_time_id INVALID_VALUES'}, status=401)
