@@ -8,12 +8,12 @@ from django.http import JsonResponse, HttpResponse
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from wiso.settings import SECRET_KEY
+from user.utils import login_decorator
 
 from .models import User
 
 
 def validate_input(data):
-
     if len(data['password']) < 8:
         return JsonResponse({'message': 'INVALID_PASSWORD'}, status=400)
 
@@ -72,6 +72,25 @@ class SignInView(View):
             return JsonResponse({'message': 'INVALID_USER'}, status=400)
         except KeyError:
             return JsonResponse({'message': 'INVALID_KEYS'}, status=400)
+
+
+class UserProfileView(View):
+    @login_decorator
+    def get(self, request):
+        user = User.objects.get(id=request.user.id)
+
+        try:
+            user_info = dict()
+            user_info['name'] = user.name
+            user_info['email'] = user.email
+            user_info['mobile_number'] = user.mobile_number
+            user_info['regist_datetime'] = user.regist_datetime
+            user_info['update_datetime'] = user.update_datetime
+
+            return JsonResponse({'User_Profile': user_info}, status=200)
+
+        except User.DoesNotExist:
+            return JsonResponse({'message': 'INVALID_USER'}, status=400)
 
 
 class KakaologinView(View):

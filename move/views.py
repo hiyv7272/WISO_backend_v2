@@ -5,14 +5,12 @@ from django.views import View
 from user.utils import login_decorator, sms_service
 
 from move.models import MoveReservation, MoveCategory
-from user.models import User
 
 
 class MoveReserve(View):
     @login_decorator
     def post(self, request):
         data = json.loads(request.body)
-        user = User.objects.get(id=request.user.id)
 
         if int(data['move_category_id']) > 3:
             return JsonResponse({'message': 'please choose between three options'})
@@ -27,7 +25,11 @@ class MoveReserve(View):
                 mobile_number=data['mobile_number'],
             ).save()
 
-            sms_service(data)
+            user_data = dict()
+            user_data['mobile_number'] = data['mobile_number']
+            user_data['address'] = data['address']
+            sms_service(user_data)
+
             return JsonResponse({'message': 'SUCCESS'}, status=200)
 
         except TypeError:

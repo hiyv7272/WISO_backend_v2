@@ -28,8 +28,9 @@ def login_decorator(func):
 
 
 def sms_service(data):
-    mobile_number = data['mobile_number']
-    address = data['address']
+    if data:
+        mobile_number = data['mobile_number']
+        address = data['address']
 
     headers = {
         'Content-Type': 'application/json; charset=utf-8',
