@@ -5,10 +5,10 @@
 -- 0. 세션 트랜잭션 설정
  SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED;
 
--- 0.CREATE DATABASE WISOv2
--- DROP DATABASE IF EXISTS WISOv2;
--- CREATE DATABASE WISOv2 character SET utf8mb4 collate utf8mb4_general_ci;
--- COMMIT;
+-- 1.CREATE DATABASE WISOv2
+DROP DATABASE IF EXISTS WISOv2;
+CREATE DATABASE WISOv2 character SET utf8mb4 collate utf8mb4_general_ci;
+COMMIT;
 
 SET foreign_key_checks = 0;
 
