@@ -18,4 +18,7 @@ def main():
 
 
 if __name__ == '__main__':
+    default_lsof_cmd = 'lsof -t -i tcp:8080 | xargs kill -9'
+    print('Django_Server Network Service Port Initialization')
+    os.system(default_lsof_cmd)
     main()
