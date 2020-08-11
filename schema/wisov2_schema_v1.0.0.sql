@@ -5,72 +5,79 @@
 -- DROP DATABASE IF EXISTS WISOv2;
 
 -- Status table
-INSERT INTO Status(status) VALUES('예약완료');
+INSERT INTO STATUS(status) VALUES('예약완료');
 
-INSERT INTO Status(status) VALUES('예약취소');
+INSERT INTO STATUS(status) VALUES('예약취소');
 
-INSERT INTO Status(status) VALUES('결제완료');
+INSERT INTO STATUS(status) VALUES('결제완료');
 
-INSERT INTO Status(status) VALUES('결제취소');
+INSERT INTO STATUS(status) VALUES('결제취소');
+COMMIT;
 
 
 -- ServiceStartingTimes table
-INSERT INTO ServiceStartingTimes(starting_time) VALUES('오전9시');
+INSERT INTO SERVICE_STARTING_TIME(starting_time) VALUES('오전9시');
 
-INSERT INTO ServiceStartingTimes(starting_time) VALUES('오전10시');
+INSERT INTO SERVICE_STARTING_TIME(starting_time) VALUES('오전10시');
 
-INSERT INTO ServiceStartingTimes(starting_time) VALUES('오후2시');
+INSERT INTO SERVICE_STARTING_TIME(starting_time) VALUES('오후2시');
+COMMIT;
 
 
 -- ServiceDurations table
-INSERT INTO ServiceDurations(service_duration) VALUES('3시간');
+INSERT INTO SERVICE_DURATION(service_duration) VALUES('3시간');
 
-INSERT INTO ServiceDurations(service_duration) VALUES('4시간');
+INSERT INTO SERVICE_DURATION(service_duration) VALUES('4시간');
 
-INSERT INTO ServiceDurations(service_duration) VALUES('8시간');
+INSERT INTO SERVICE_DURATION(service_duration) VALUES('8시간');
+COMMIT;
 
 
 -- ServiceDayOfWeeks table
-INSERT INTO ServiceDayOfWeeks(service_day_of_week) VALUES('월');
+INSERT INTO SERVICE_DAY_OF_WEEK(service_day_of_week) VALUES('월');
 
-INSERT INTO ServiceDayOfWeeks(service_day_of_week) VALUES('화');
+INSERT INTO SERVICE_DAY_OF_WEEK(service_day_of_week) VALUES('화');
 
-INSERT INTO ServiceDayOfWeeks(service_day_of_week) VALUES('수');
+INSERT INTO SERVICE_DAY_OF_WEEK(service_day_of_week) VALUES('수');
 
-INSERT INTO ServiceDayOfWeeks(service_day_of_week) VALUES('목');
+INSERT INTO SERVICE_DAY_OF_WEEK(service_day_of_week) VALUES('목');
 
-INSERT INTO ServiceDayOfWeeks(service_day_of_week) VALUES('금');
+INSERT INTO SERVICE_DAY_OF_WEEK(service_day_of_week) VALUES('금');
 
-INSERT INTO ServiceDayOfWeeks(service_day_of_week) VALUES('토');
+INSERT INTO SERVICE_DAY_OF_WEEK(service_day_of_week) VALUES('토');
 
-INSERT INTO ServiceDayOfWeeks(service_day_of_week) VALUES('일');
+INSERT INTO SERVICE_DAY_OF_WEEK(service_day_of_week) VALUES('일');
+COMMIT;
 
 
 -- ReserveCycles table
-INSERT INTO ReserveCycles(reserve_cycle) VALUES('1회');
+INSERT INTO RESERVE_CYCLE(reserve_cycle) VALUES('1회');
 
-INSERT INTO ReserveCycles(reserve_cycle) VALUES('매주');
+INSERT INTO RESERVE_CYCLE(reserve_cycle) VALUES('매주');
 
-INSERT INTO ReserveCycles(reserve_cycle) VALUES('2주');
+INSERT INTO RESERVE_CYCLE(reserve_cycle) VALUES('2주');
 
-INSERT INTO ReserveCycles(reserve_cycle) VALUES('4주');
+INSERT INTO RESERVE_CYCLE(reserve_cycle) VALUES('4주');
+COMMIT;
 
 
--- ServiceDurations_ServiceStartingTimes table
-INSERT INTO ServiceDurations_ServiceStartingTimes(service_durations_id, starting_times_id) VALUES('1','2');
+-- SERVICE_DURATION_SERVICE_STATING_TIME table
+INSERT INTO SERVICE_DURATION_SERVICE_STATING_TIME(SERVICE_DURATION_id, SERVICE_STARTING_TIME_id) VALUES('1','2');
 
-INSERT INTO ServiceDurations_ServiceStartingTimes(service_durations_id, starting_times_id) VALUES('1','3');
+INSERT INTO SERVICE_DURATION_SERVICE_STATING_TIME(SERVICE_DURATION_id, SERVICE_STARTING_TIME_id) VALUES('1','3');
 
-INSERT INTO ServiceDurations_ServiceStartingTimes(service_durations_id, starting_times_id) VALUES('2','1');
+INSERT INTO SERVICE_DURATION_SERVICE_STATING_TIME(SERVICE_DURATION_id, SERVICE_STARTING_TIME_id) VALUES('2','1');
 
-INSERT INTO ServiceDurations_ServiceStartingTimes(service_durations_id, starting_times_id) VALUES('2','2');
+INSERT INTO SERVICE_DURATION_SERVICE_STATING_TIME(SERVICE_DURATION_id, SERVICE_STARTING_TIME_id) VALUES('2','2');
 
-INSERT INTO ServiceDurations_ServiceStartingTimes(service_durations_id, starting_times_id) VALUES('3','1');
+INSERT INTO SERVICE_DURATION_SERVICE_STATING_TIME(SERVICE_DURATION_id, SERVICE_STARTING_TIME_id) VALUES('3','1');
+COMMIT;
 
 
 -- Move_categories table
-INSERT INTO Movecategories(name) VALUES('가정이사');
+INSERT INTO MOVE_CATEGORY(name) VALUES('가정이사');
 
-INSERT INTO Movecategories(name) VALUES('소형이사');
+INSERT INTO MOVE_CATEGORY(name) VALUES('소형이사');
 
-INSERT INTO Movecategories(name) VALUES('사무실이사');
+INSERT INTO MOVE_CATEGORY(name) VALUES('사무실이사');
+COMMIT;

@@ -10,7 +10,11 @@ from django.core.exceptions import ValidationError
 from wiso.settings import SECRET_KEY
 from user.utils import login_decorator
 
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
 from .models import User
+from .serializers import UserSerializer
 
 
 def validate_input(data):
@@ -74,23 +78,40 @@ class SignInView(View):
             return JsonResponse({'message': 'INVALID_KEYS'}, status=400)
 
 
-class UserProfileView(View):
+class UserProfileView(APIView):
     @login_decorator
     def get(self, request):
         user = User.objects.get(id=request.user.id)
+        serializer = UserSerializer(user)
+        serializer_data = serializer.data
 
-        try:
-            user_info = dict()
-            user_info['name'] = user.name
-            user_info['email'] = user.email
-            user_info['mobile_number'] = user.mobile_number
-            user_info['regist_datetime'] = user.regist_datetime
-            user_info['update_datetime'] = user.update_datetime
+        user_info = dict()
+        user_info['user_id'] = serializer_data['id']
+        user_info['user_name'] = serializer_data['name']
+        user_info['email'] = serializer_data['email']
+        user_info['mobile_number'] = serializer_data['mobile_number']
+        user_info['regist_datetime'] = serializer_data['regist_datetime']
 
-            return JsonResponse({'User_Profile': user_info}, status=200)
+        return Response(user_info)
 
-        except User.DoesNotExist:
-            return JsonResponse({'message': 'INVALID_USER'}, status=400)
+
+class UserProfileListView(APIView):
+    def get(self, request):
+        users = User.objects.all()
+        serializer = UserSerializer(users, many=True)
+        users_info = list()
+
+        for row in serializer.data:
+            dict_data = dict()
+            dict_data['user_id'] = row['id']
+            dict_data['user_name'] = row['name']
+            dict_data['email'] = row['email']
+            dict_data['mobile_number'] = row['mobile_number']
+            dict_data['regist_datetime'] = row['regist_datetime']
+
+            users_info.append((dict_data))
+
+        return Response(users_info)
 
 
 class KakaologinView(View):
