@@ -7,14 +7,17 @@ from django.views import View
 from django.http import JsonResponse, HttpResponse
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
+from django.shortcuts import get_object_or_404
 from wiso.settings import SECRET_KEY
 from user.utils import login_decorator
+from datetime import datetime
 
-from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework import viewsets, status
+from rest_framework.response import Response
 
 from .models import User
-from .serializers import UserSerializer
+from .serializers import UserSerializer, UserUpdateSerializer, UserDeleteSerializer
 
 
 def validate_input(data):
@@ -48,7 +51,8 @@ class SignUpView(View):
             User(
                 email=data['email'],
                 password=hashed_password,
-                mobile_number=data['mobile_number']
+                mobile_number=data['mobile_number'],
+                regist_datetime=datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             ).save()
             return HttpResponse(status=200)
 
@@ -78,40 +82,106 @@ class SignInView(View):
             return JsonResponse({'message': 'INVALID_KEYS'}, status=400)
 
 
-class UserProfileView(APIView):
+class UserProfileView(viewsets.GenericViewSet):
+    def create(self, request):
+        data = request.data
+        print('data: ', data)
+        serializer = UserSerializer(data=data)
+        if serializer.is_valid(raise_exception=True):
+            serializer.save()
+
+        return Response(status=status.HTTP_200_OK)
+
+    def list(self, request):
+        query_set = User.objects.all().filter(is_use=True)
+        serializer = UserSerializer(query_set, many=True)
+        print('queryset: ', query_set)
+        print('serializer:', serializer)
+        print('serializer.data:', serializer.data)
+        return Response(serializer.data)
+
     @login_decorator
-    def get(self, request):
-        user = User.objects.get(id=request.user.id)
+    def retrieve(self, request, pk=None):
+        query_set = User.objects.all()
+        user = get_object_or_404(query_set, pk=request.user.id)
         serializer = UserSerializer(user)
-        serializer_data = serializer.data
+        # print('serializer:', serializer)
+        # print('serializer.data:', serializer.data)
+        return Response(serializer.data)
 
-        user_info = dict()
-        user_info['user_id'] = serializer_data['id']
-        user_info['user_name'] = serializer_data['name']
-        user_info['email'] = serializer_data['email']
-        user_info['mobile_number'] = serializer_data['mobile_number']
-        user_info['regist_datetime'] = serializer_data['regist_datetime']
+    @login_decorator
+    def update(self, request, pk=None):
+        data = request.data
+        print('here')
+        query_set = User.objects.all()
+        user = get_object_or_404(query_set, pk=request.user.id)
+        serializer = UserUpdateSerializer(user, data=data, partial=True)
+        if serializer.is_valid(raise_exception=True):
+            serializer.save()
+        print('serializer:', serializer)
+        print('serializer.data:', serializer.data)
+        return Response(serializer.data)
 
-        return Response(user_info)
+    @login_decorator
+    def delete(self, request, pk=None):
+        user = User.objects.get(id=request.user.id)
+        data = request.data
+        query_set = User.objects.all()
+        print('data:', data)
+        print('user.password.encode:', user.password.encode('utf-8'))
+        # if not bcrypt.checkpw(data['password'].encode('utf-8'), user.password.encode('utf-8')):
+        #     return Response(status=status.HTTP_400_BAD_REQUEST)
+        print('here!!!!!')
+        user = get_object_or_404(query_set, pk=user.id)
+        print('here!!!!!22222')
+
+        serializer = UserDeleteSerializer(user, data=data, partial=True)
+        print('here!!!!!33333')
+
+        if serializer.is_valid(raise_exception=True):
+            serializer.save()
+        print('here!!!!!44444')
+        print('serializer.data:', serializer.data)
+        return Response(serializer.data)
 
 
-class UserProfileListView(APIView):
-    def get(self, request):
-        users = User.objects.all()
-        serializer = UserSerializer(users, many=True)
-        users_info = list()
 
-        for row in serializer.data:
-            dict_data = dict()
-            dict_data['user_id'] = row['id']
-            dict_data['user_name'] = row['name']
-            dict_data['email'] = row['email']
-            dict_data['mobile_number'] = row['mobile_number']
-            dict_data['regist_datetime'] = row['regist_datetime']
 
-            users_info.append((dict_data))
 
-        return Response(users_info)
+# class UserProfileView(APIView):
+#     @login_decorator
+#     def get(self, request):
+#         user = User.objects.get(id=request.user.id)
+#         serializer = UserSerializer(user)
+#         serializer_data = serializer.data
+#
+#         user_info = dict()
+#         user_info['user_id'] = serializer_data['id']
+#         user_info['user_name'] = serializer_data['name']
+#         user_info['email'] = serializer_data['email']
+#         user_info['mobile_number'] = serializer_data['mobile_number']
+#         user_info['regist_datetime'] = serializer_data['regist_datetime']
+#
+#         return Response(user_info)
+#
+#
+# class UserProfileListView(APIView):
+#     def get(self, request):
+#         users = User.objects.all()
+#         serializer = UserSerializer(users, many=True)
+#         users_info = list()
+#
+#         for row in serializer.data:
+#             dict_data = dict()
+#             dict_data['user_id'] = row['id']
+#             dict_data['user_name'] = row['name']
+#             dict_data['email'] = row['email']
+#             dict_data['mobile_number'] = row['mobile_number']
+#             dict_data['regist_datetime'] = row['regist_datetime']
+#
+#             users_info.append((dict_data))
+#
+#         return Response(users_info)
 
 
 class KakaologinView(View):
