@@ -5,90 +5,31 @@ import requests
 
 from django.views import View
 from django.http import JsonResponse, HttpResponse
-from django.core.validators import validate_email
-from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404
 from wiso.settings import SECRET_KEY
 from user.utils import login_decorator
-from datetime import datetime
 
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 
 from .models import User
-from .serializers import UserSerializer, UserUpdateSerializer, UserDeleteSerializer
-
-
-def validate_input(data):
-    if len(data['password']) < 8:
-        return JsonResponse({'message': 'INVALID_PASSWORD'}, status=400)
-
-    if len(data['mobile_number']) != 11:
-        return JsonResponse({'message': 'INVALID_PHONE_NUMBER'}, status=400)
-
-    if User.objects.filter(email=data['email']).exists():
-        return JsonResponse({'message': 'DUPLICATE_EMAIL'}, status=401)
-
-    if User.objects.filter(mobile_number=data['mobile_number']).exists():
-        return JsonResponse({'message': 'DUPLICATE_MOBLIE_NUMBER'}, status=401)
-
-    return None
-
-
-class SignUpView(View):
-    def post(self, request):
-        data = json.loads(request.body)
-
-        try:
-            validate_email(data['email'])
-            validation = validate_input(data)
-
-            if validation:
-                return validation
-
-            hashed_password = bcrypt.hashpw(data['password'].encode('utf-8'), bcrypt.gensalt()).decode()
-            User(
-                email=data['email'],
-                password=hashed_password,
-                mobile_number=data['mobile_number'],
-                regist_datetime=datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            ).save()
-            return HttpResponse(status=200)
-
-        except ValidationError:
-            return JsonResponse({'message': 'INVALID_EMAIL_SYNTAX'}, status=400)
-        except TypeError:
-            return JsonResponse({'message': 'FAILED_HASHED'}, status=400)
-        except KeyError:
-            return JsonResponse({'message': 'INVALID_KEYS'}, status=400)
-
-
-class SignInView(View):
-    def post(self, request):
-        data = json.loads(request.body)
-
-        try:
-            user = User.objects.get(email=data['email'])
-
-            if bcrypt.checkpw(data['password'].encode('utf-8'), user.password.encode('utf-8')):
-                access_token = jwt.encode({'id': user.id}, SECRET_KEY, algorithm='HS256')
-                return JsonResponse({'access_token': access_token.decode('utf-8')}, status=200)
-
-            return JsonResponse({'message': 'INVALID_PASSWORD'}, status=401)
-        except User.DoesNotExist:
-            return JsonResponse({'message': 'INVALID_USER'}, status=400)
-        except KeyError:
-            return JsonResponse({'message': 'INVALID_KEYS'}, status=400)
+from .serializers import UserSerializer, UserSignUpSerializer, UserSignInSerializer, UserUpdateSerializer, UserDeleteSerializer
 
 
 class UserViewSet(viewsets.GenericViewSet):
-    def create(self, request):
+    def sign_up(self, request):
         data = request.data
-        serializer = UserSerializer(data=data)
-        if serializer.is_valid(raise_exception=True):
-            serializer.save()
+        serializer = UserSignUpSerializer(data=data)
+        if serializer.validate(data):
+            serializer.create(data)
 
         return Response(status=status.HTTP_200_OK)
+
+    def sign_in(self, request):
+        data = request.data
+        serializer = UserSignInSerializer(data=data)
+        if serializer.validate(data):
+            return Response({'access_token': serializer.get(data)})
 
     def list(self, request):
         query_set = User.objects.all().filter(is_use=True)
@@ -125,7 +66,6 @@ class UserViewSet(viewsets.GenericViewSet):
 
         user = get_object_or_404(query_set, pk=user.id)
         serializer = UserDeleteSerializer(user, data=data, partial=True)
-
         if serializer.is_valid(raise_exception=True):
             serializer.save()
 
