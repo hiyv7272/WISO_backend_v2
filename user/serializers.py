@@ -7,16 +7,45 @@ from datetime import datetime
 from wiso.settings import SECRET_KEY
 
 
-class UserSerializer(serializers.ModelSerializer):
+class DynamicFieldsModelSerializer(serializers.ModelSerializer):
+    """
+    A ModelSerializer that takes an additional `fields` argument that
+    controls which fields should be displayed.
+    """
+    def __init__(self, *args, **kwargs):
+        # Don't pass the 'fields' arg up to the superclass
+        fields = kwargs.pop('fields', None)
+        # Instantiate the superclass normally
+        super().__init__(*args, **kwargs)
+        if fields is not None:
+            # Drop any fields that are not specified in the `fields` argument.
+            allowed = set(fields)
+            existing = set(self.fields)
+            for field_name in existing - allowed:
+                self.fields.pop(field_name)
+
+
+class UserSerializer(DynamicFieldsModelSerializer):
     class Meta:
         model = User
         fields = '__all__'
 
+    def get(self, validated_data):
+        try:
+            user = User.objects.get(email=validated_data['email'])
+            if bcrypt.checkpw(validated_data['password'].encode('utf-8'), user.password.encode('utf-8')):
+                access_token = jwt.encode({'id': user.id}, SECRET_KEY, algorithm='HS256')
+                return access_token
+        except TypeError:
+            raise serializers.ValidationError({'message': 'INVALID_HASHED'})
+        except KeyError:
+            raise serializers.ValidationError({'message': 'INVALID_KEYS'})
 
-class UserSignUpSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = '__all__'
+    def user_get_validate(self, data):
+        if len(data['password']) < 8:
+            raise serializers.ValidationError({'message': 'INVALID_PASSWORD'})
+
+        return data
 
     def create(self, validated_data):
         try:
@@ -36,7 +65,7 @@ class UserSignUpSerializer(serializers.ModelSerializer):
         except KeyError:
             raise serializers.ValidationError({'message': 'INVALID_KEYS'})
 
-    def validate(self, data):
+    def user_create_validate(self, data):
         if len(data['password']) < 8:
             raise serializers.ValidationError({'message': 'INVALID_PASSWORD'})
 
@@ -45,29 +74,6 @@ class UserSignUpSerializer(serializers.ModelSerializer):
 
         if User.objects.filter(email=data['email']).exists():
             raise serializers.ValidationError({'message': 'DUPLICATE_EMAIL'})
-
-        return data
-
-
-class UserSignInSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ['email', 'password']
-
-    def get(self, validated_data):
-        try:
-            user = User.objects.get(email=validated_data['email'])
-            if bcrypt.checkpw(validated_data['password'].encode('utf-8'), user.password.encode('utf-8')):
-                access_token = jwt.encode({'id': user.id}, SECRET_KEY, algorithm='HS256')
-                return access_token
-        except TypeError:
-            raise serializers.ValidationError({'message': 'INVALID_HASHED'})
-        except KeyError:
-            raise serializers.ValidationError({'message': 'INVALID_KEYS'})
-
-    def validate(self, data):
-        if len(data['password']) < 8:
-            raise serializers.ValidationError({'message': 'INVALID_PASSWORD'})
 
         return data
 
@@ -94,13 +100,14 @@ class UserUpdateSerializer(serializers.ModelSerializer):
 class UserDeleteSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'update_datetime', 'is_use']
+        fields = ['id', 'update_datetime', 'is_use', 'password']
 
     def update(self, instance, validated_data):
         try:
-            instance.update_datetime = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            instance.is_use = False
-            instance.save()
+            if bcrypt.checkpw(validated_data['password'].encode('utf-8'), instance.password.encode('utf-8')):
+                instance.update_datetime = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                instance.is_use = False
+                instance.save()
 
             return instance
         except TypeError:

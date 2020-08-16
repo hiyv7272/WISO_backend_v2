@@ -13,40 +13,40 @@ from rest_framework import viewsets, status
 from rest_framework.response import Response
 
 from .models import User
-from .serializers import UserSerializer, UserSignUpSerializer, UserSignInSerializer, UserUpdateSerializer, UserDeleteSerializer
+from .serializers import UserSerializer, UserUpdateSerializer, UserDeleteSerializer
 
 
 class UserViewSet(viewsets.GenericViewSet):
     def sign_up(self, request):
         data = request.data
-        serializer = UserSignUpSerializer(data=data)
-        if serializer.validate(data):
+        serializer = UserSerializer(data=data)
+        if serializer.user_create_validate(data):
             serializer.create(data)
 
         return Response(status=status.HTTP_200_OK)
 
     def sign_in(self, request):
         data = request.data
-        serializer = UserSignInSerializer(data=data)
-        if serializer.validate(data):
+        serializer = UserSerializer(data=data, fields=('email', 'password'))
+        if serializer.user_get_validate(data):
             return Response({'access_token': serializer.get(data)})
 
     def list(self, request):
         query_set = User.objects.all().filter(is_use=True)
-        serializer = UserSerializer(query_set, many=True)
+        serializer = UserSerializer(query_set, fields=('id', 'name', 'mobile_number', 'regist_datetime', 'update_datetime', 'is_use'), many=True)
 
         return Response(serializer.data)
 
     @login_decorator
-    def retrieve(self, request, pk=None):
+    def retrieve(self, request):
         query_set = User.objects.all()
         user = get_object_or_404(query_set, pk=request.user.id)
-        serializer = UserSerializer(user)
+        serializer = UserSerializer(user, fields=('id', 'name', 'mobile_number', 'regist_datetime', 'update_datetime'))
 
         return Response(serializer.data)
 
     @login_decorator
-    def update(self, request, pk=None):
+    def update(self, request):
         data = request.data
         query_set = User.objects.all()
         user = get_object_or_404(query_set, pk=request.user.id)
@@ -54,22 +54,18 @@ class UserViewSet(viewsets.GenericViewSet):
         if serializer.is_valid(raise_exception=True):
             serializer.save()
 
-        return Response(serializer.data)
+        return Response(status=status.HTTP_200_OK)
 
     @login_decorator
-    def delete(self, request, pk=None):
-        user = User.objects.get(id=request.user.id)
+    def delete(self, request):
         data = request.data
         query_set = User.objects.all()
-        if not bcrypt.checkpw(data['password'].encode('utf-8'), user.password.encode('utf-8')):
-            return Response(status=status.HTTP_400_BAD_REQUEST)
-
-        user = get_object_or_404(query_set, pk=user.id)
+        user = get_object_or_404(query_set, pk=request.user.id)
         serializer = UserDeleteSerializer(user, data=data, partial=True)
         if serializer.is_valid(raise_exception=True):
             serializer.save()
 
-        return Response(serializer.data)
+        return Response(status=status.HTTP_200_OK)
 
 
 class KakaologinView(View):
