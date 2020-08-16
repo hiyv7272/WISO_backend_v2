@@ -4,6 +4,9 @@ from django.views import View
 from django.http import JsonResponse
 from user.utils import login_decorator, sms_service
 
+from rest_framework import viewsets, status
+from rest_framework.response import Response
+
 from .models import (
     HousecleaningReservation,
     ReserveCycle,
@@ -12,6 +15,20 @@ from .models import (
     ServiceDayOfWeek,
 )
 from user.models import User
+from .serializers import HouseCleanningReserveSerializer
+
+
+class HouseCleanningOnetimeReserveView(viewsets.GenericViewSet):
+    @login_decorator
+    def post(self, request):
+        data = json.loads(request.body)
+        data['user_id'] = request.user.id
+        query_set = HousecleaningReservation.objects.all()
+        serializer = HouseCleanningReserveSerializer(query_set, data=data)
+        if serializer.is_valid(raise_exception=True):
+            serializer.create(validated_data=data)
+
+        return Response(status=status.HTTP_200_OK)
 
 
 class ReserveCycleView(View):

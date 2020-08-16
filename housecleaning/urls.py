@@ -6,7 +6,8 @@ from .views import (
     ServiceDurationsView,
     ReserveCycleView,
     HousecleaningReserveInfo,
-    OnetimeReserve
+    OnetimeReserve,
+    HouseCleanningOnetimeReserveView,
 )
 
 urlpatterns = [
@@ -15,5 +16,6 @@ urlpatterns = [
     path('/servicestartingtimes', ServiceStartingTimesView.as_view()),
     path('/servicedayofweeks', ServiceDayOfWeeksView.as_view()),
     path('/reserve', HousecleaningReserveInfo.as_view()),
-    path('/reserve/onetime', OnetimeReserve.as_view()),
+    # path('/reserve/onetime', OnetimeReserve.as_view()),
+    path('/reserve/onetime', HouseCleanningOnetimeReserveView.as_view({'post': 'post'})),
 ]
